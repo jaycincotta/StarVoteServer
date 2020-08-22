@@ -38,10 +38,10 @@ namespace StarVote
             foreach (var key in collection.Keys)
             {
                 var values = collection[key].ToArray();
-                var value = String.Join(", ", values);
+                var value = String.Join("|", values);
                 list.Add($"{key}={value}");
             }
-            return String.Join("; ", list.ToArray());
+            return String.Join(", ", list.ToArray());
         }
     }
 }
