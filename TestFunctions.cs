@@ -37,7 +37,7 @@ namespace StarVote
 
             string doc = req.Query["doc"];
             string range = req.Query["range"];
-            using var service = new ServiceAccount(doc);
+            using var service = new GoogleService(doc);
 
             try
             {
@@ -58,7 +58,7 @@ ILogger log)
         {
             string doc = req.Query["doc"];
             string range = req.Query["range"];
-            using var service = new ServiceAccount(doc);
+            using var service = new GoogleService(doc);
 
             IList<IList<object>> list = new List<IList<object>>();
             list.Add(new List<object> { "A1", null, "C1" });
@@ -82,7 +82,7 @@ ILogger log)
 ILogger log)
         {
             string doc = req.Query["doc"];
-            using var service = new ServiceAccount(doc);
+            using var service = new GoogleService(doc);
 
             try
             {
@@ -106,6 +106,26 @@ ILogger log)
                 list.Add($"{key}={value}");
             }
             return String.Join(", ", list.ToArray());
+        }
+
+        [FunctionName(nameof(Test3))]
+        public static async Task<IActionResult> Test3(
+[HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+ILogger log)
+        {
+            string doc = req.Query["doc"];
+            using var service = new GoogleService(doc);
+
+            try
+            {
+                var result = await service.CreateSheet().ConfigureAwait(false);
+                return new OkObjectResult(result);
+            }
+            catch (Exception ex)
+            {
+                log.LogInformation(ex.ToString());
+                return new BadRequestObjectResult(ex.ToString());
+            }
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Google.Apis.Sheets.v4.Data;
 using Microsoft.VisualBasic;
+using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
 namespace StarVoteServer
@@ -44,6 +46,16 @@ namespace StarVoteServer
             };
 
             return rows;
+        }
+        
+        public static RowData ToRowData(this string[] array)
+        {
+            var cells = new List<CellData>();
+            foreach (var element in array) {
+                cells.Add(element.ToCellData());
+            }
+            var rowData = new RowData { Values = cells };
+            return rowData;
         }
 
         private static RowData CreateRow( params CellData[] cells)

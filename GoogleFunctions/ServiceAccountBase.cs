@@ -1,16 +1,14 @@
 ﻿using Google.Apis.Auth.OAuth2;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Services;
-using Microsoft.Azure.WebJobs;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using Google.Apis.Sheets.v4.Data;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
 
 namespace StarVoteServer.GoogleFunctions
 {
+    /// <summary>
+    /// ServiceAccountBase encapsulates the details of authenticating using a service account
+    /// </summary>
     public abstract class ServiceAccountBase : IDisposable
     {
         private string[] _scopes = { SheetsService.Scope.Spreadsheets };

@@ -17,7 +17,7 @@ namespace StarVoteServer
         public static async Task<IActionResult> Initialize(
         [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "Initialize/{docId}")] HttpRequest req, string docId, ILogger log)
         {
-            using var service = new ServiceAccount(docId);
+            using var service = new GoogleService(docId);
 
             // First, validate that we can access the document.
             try
