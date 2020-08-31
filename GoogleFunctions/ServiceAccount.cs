@@ -1,8 +1,6 @@
 ﻿using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
-using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace StarVoteServer.GoogleFunctions
 {
@@ -45,14 +43,15 @@ namespace StarVoteServer.GoogleFunctions
                 {
                     Title = title,
                     SheetId = sheetId,
-                    GridProperties = new GridProperties { FrozenRowCount = 1 }
+                    Index = 1, // The presumes we will add sheets in reverse order
+                    GridProperties = new GridProperties { FrozenRowCount = 1 },
                 }
             };
 
             var row = headings.ToRowData();
             var updateRequest = new UpdateCellsRequest
             {
-                Range = new GridRange { SheetId = 1, StartColumnIndex = 0, StartRowIndex = 0, EndColumnIndex = headings.Length, EndRowIndex = 1 },
+                Range = new GridRange { SheetId = sheetId, StartColumnIndex = 0, StartRowIndex = 0, EndColumnIndex = headings.Length, EndRowIndex = 1 },
                 Rows = new List<RowData> { row },
                 Fields = "userEnteredValue"
             };
@@ -60,6 +59,46 @@ namespace StarVoteServer.GoogleFunctions
             _requests.Add(new Request { AddSheet = addSheetRequest });
             _requests.Add(new Request { UpdateCells = updateRequest });
         }
+
+        protected void AddDateFormating(GridRange range)
+        {
+            var formatRequest = new RepeatCellRequest
+            {
+                Range = range,
+                Cell = new CellData
+                {
+                    UserEnteredFormat = new CellFormat
+                    {
+                        NumberFormat = new NumberFormat
+                        {
+                            Type = "DATE",
+                            Pattern = "M/d/yy hh:mm"
+                        }
+                    }
+                },
+                Fields = "userEnteredFormat.numberFormat"
+            };
+            _requests.Add(new Request { RepeatCell = formatRequest });
+        }
+
+        protected void AddCentering(GridRange range)
+        {
+            var formatRequest = new RepeatCellRequest
+            {
+                Range = range,
+                Cell = new CellData
+                {
+                    UserEnteredFormat = new CellFormat
+                    {
+                        HorizontalAlignment = "CENTER",
+                        WrapStrategy = "WRAP"
+                    }
+                },
+                Fields = "userEnteredFormat"
+            };
+            _requests.Add(new Request { RepeatCell = formatRequest });
+        }
+
         protected SpreadsheetsResource.ValuesResource.UpdateRequest BuildUpdateRequest(string range, IList<IList<object>> values)
         {
             ValueRange body = new ValueRange
@@ -71,45 +110,5 @@ namespace StarVoteServer.GoogleFunctions
 
             return request;
         }
-
-        /*
-        public async Task<string> CreateSettings(string spreadsheetId, string sheetName, ElectionSettings settings)
-        {
-            ValueRange body = new ValueRange
-            {
-                Values = values
-            };
-
-            var addSheetRequest = new AddSheetRequest
-            {
-                Properties = new SheetProperties
-                {
-                    Title = sheetName
-                }
-            };
-            addSheetRequest.Properties.s
-
-            var updateCellsRequest = new UpdateCellsRequest
-            {
-                Start = new GridCoordinate().
-                Rows = settings.ToRowData()
-            };
-
-            var batchRequest = new BatchUpdateSpreadsheetRequest
-            {
-                Requests = new List<Request>
-            {
-                new Request { AddSheet = addSheetRequest },
-                new Request { UpdateCells = updateCellsRequest }
-            }
-            };
-
-            var batchUpdateRequest =
-                _service.Spreadsheets.BatchUpdate(batchRequest, spreadsheetId);
-
-            var response = await batchUpdateRequest.ExecuteAsync().ConfigureAwait(false);
-            return JsonConvert.SerializeObject(response.Replies);
-        }
-        */
     }
 }

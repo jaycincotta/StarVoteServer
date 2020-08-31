@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Google;
 using StarVoteServer.GoogleFunctions;
+using System.IO;
 
 namespace StarVoteServer
 {
@@ -18,7 +19,7 @@ namespace StarVoteServer
         [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "Initialize/{docId}")] HttpRequest req, string docId, ILogger log)
         {
             using var service = new GoogleService(docId);
-
+            string body = await new StreamReader(req.Body).ReadToEndAsync().ConfigureAwait(false);
             // First, validate that we can access the document.
             try
             {
@@ -30,26 +31,19 @@ To avoid overwriting data, only a brand new Google Sheet document may be initial
 Please follow these steps:
 1. Create a new Google Sheets document
 2. Change the title of the document to the name of your election
-3. Share the document with service@starvote.iam.gserviceaccount.com granting the service Editor permissions
+3. Share the document with service@starvote.iam.gserviceaccount.com granting Editor permissions
 4. Retry the initialize command using the documentId of your new Google Sheets file
-");
+")
+                    {
+                        StatusCode = 409
+                    };
                 }
 
-                var json = @"{
-   'election': 'Test Election',
-      'startTime': '8/1/2020 12:00',
-      'endTime': '8/31/2020 23:59:59',
-      'faqUrl': 'https://info.com/faq',
-      'supportEmail': 'support@info.com',
-      'auditEmail': 'audit@info.com',
-      'privateResults': true,
-      'anonymousVoters': false,
-      'verifiedVoters': true,
-      'ballotUpdates': false
-}";
-                var settings = JsonConvert.DeserializeObject<ElectionSettings>(json);
-                var result = await service.Initialize(settings).ConfigureAwait(false);
-                return new OkObjectResult(result);
+                log.LogInformation("INPUT: " + body);
+                var election = string.IsNullOrWhiteSpace(body) ? Election.DefaultValue() : JsonConvert.DeserializeObject<Election>(body);
+
+                var result = await service.Initialize(election).ConfigureAwait(false);
+                return new OkObjectResult(body);
             }
             catch (GoogleApiException ex)
             {

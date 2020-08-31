@@ -3,6 +3,7 @@ using Microsoft.VisualBasic;
 using Microsoft.WindowsAzure.Storage.Blob.Protocol;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
@@ -10,44 +11,48 @@ namespace StarVoteServer
 {
     public static class ExtensionMethods
     {
-        const string dateFormat = "MM/d/yy H:mm";
+        const string dateFormat = "M/d/yy H:mm";
 
-        public static IList<IList<object>> ToList(this ElectionSettings settings)
+        static CellData GetCellData(string value)
         {
-            var list = new List<IList<object>>
+            if (string.IsNullOrWhiteSpace(value))
             {
-                new List<object> { "Election", settings.Election },
-                new List<object> { "StartTime", settings.StartTime.ToString(dateFormat) },
-                new List<object> { "EndTime", settings.EndTime.ToString(dateFormat) },
-                new List<object> { "FaqUrl", settings.FaqUrl },
-                new List<object> { "SupportEmail", settings.SupportEmail },
-                new List<object> { "AuditEmail", settings.AuditEmail },
-                new List<object> { "PrivateResults", settings.PrivateResults },
-                new List<object> { "AnonymousVoters", settings.AnonymousVoters },
-                new List<object> { "VerifiedVoters", settings.VerifiedVoters },
-                new List<object> { "BallotUpdates", settings.BallotUpdates }
-            };
-            return list;
+                return "".ToCellData();
+            }
+            return value.ToCellData();
+        }
+       static  CellData GetCellData(bool? value)
+       {
+            if (!value.HasValue) {
+                return "".ToCellData();
+            }
+            return value.Value.ToCellData();
+       }
+
+        static CellData GetCellData(DateTime? value)
+        {
+            return value.ToCellData();
+
         }
 
         public static IList<RowData> ToRowData(this ElectionSettings settings)
         {
             var rows = new List<RowData> {
-                CreateRow("Election".ToCellData(), settings.Election.ToCellData()),
-                CreateRow("StartTime".ToCellData(), settings.StartTime.ToCellData()),
-                CreateRow("EndTime".ToCellData(), settings.EndTime.ToCellData()),
-                CreateRow("FaqUrl".ToCellData(), settings.FaqUrl.ToCellData()),
-                CreateRow("SupportEmail".ToCellData(), settings.SupportEmail.ToCellData()),
-                CreateRow("AuditEmail".ToCellData(), settings.AuditEmail.ToCellData()),
-                CreateRow("PrivateResults".ToCellData(), settings.PrivateResults.ToCellData()),
-                CreateRow("AnonymousVoters".ToCellData(), settings.AnonymousVoters.ToCellData()),
-                CreateRow("VerifiedVoters".ToCellData(), settings.VerifiedVoters.ToCellData()),
-                CreateRow("BallotUpdates".ToCellData(), settings.BallotUpdates.ToCellData()),
+                CreateRow("StartTime".ToCellData(), GetCellData(settings.StartTime)),
+                CreateRow("EndTime".ToCellData(), GetCellData(settings.EndTime)),
+                CreateRow("FaqUrl".ToCellData(), GetCellData(settings.InfoUrl)),
+                CreateRow("AdminEmail".ToCellData(), GetCellData(settings.AdminEmail)),
+                CreateRow("SupportEmail".ToCellData(), GetCellData(settings.SupportEmail)),
+                CreateRow("AuditEmail".ToCellData(), GetCellData(settings.AuditEmail)),
+                CreateRow("EmailVerification".ToCellData(), GetCellData(settings.EmailVerification)),
+                CreateRow("VoterAuthorization".ToCellData(), GetCellData(settings.VoterAuthorization)),
+                CreateRow("BallotUpdates".ToCellData(), GetCellData(settings.BallotUpdates)),
+                CreateRow("PublicResults".ToCellData(), GetCellData(settings.PublicResults)),
             };
 
             return rows;
         }
-        
+
         public static RowData ToRowData(this string[] array)
         {
             var cells = new List<CellData>();
@@ -56,6 +61,26 @@ namespace StarVoteServer
             }
             var rowData = new RowData { Values = cells };
             return rowData;
+        }
+
+        public static T[] Slice<T>(this T[] source, int start, int? end = null)
+        {
+            var endIndex = end.HasValue ? end.Value : source.Length;
+
+            // Handles negative ends.
+            if (endIndex < 0)
+            {
+                endIndex = source.Length + endIndex;
+            }
+            int len = endIndex - start;
+
+            // Return new array.
+            T[] res = new T[len];
+            for (int i = 0; i < len; i++)
+            {
+                res[i] = source[i + start];
+            }
+            return res;
         }
 
         private static RowData CreateRow( params CellData[] cells)
@@ -67,9 +92,31 @@ namespace StarVoteServer
             return new CellData { UserEnteredValue = value.ToExtendedValue() };
         }
 
+        private static CellData ToCellData(this DateTime? value)
+        {
+            return value.HasValue ? value.Value.ToCellData() : "".ToCellData();
+        }
+
         private static CellData ToCellData(this DateTime value)
         {
-            return new CellData { UserEnteredValue = value.ToString(dateFormat).ToExtendedValue() };
+            var googleDate = (int) value.Subtract(new DateTime(1899, 12, 30, 0, 0, 0)).TotalDays;
+            var hour = value.Hour;
+            var minute = value.Minute;
+            var googleTime = (minute + hour*60) / 1440.0;
+            var timestamp = googleDate + googleTime;
+
+            return new CellData
+            {
+                UserEnteredFormat = new CellFormat
+                {
+                    NumberFormat = new NumberFormat
+                    {
+                        Type = "DATE",
+                        Pattern = dateFormat
+                    },
+                },
+                UserEnteredValue = new ExtendedValue { NumberValue = timestamp }
+            };
         }
 
         private static CellData ToCellData(this bool value)
