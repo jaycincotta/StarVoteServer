@@ -39,7 +39,6 @@ Please follow these steps:
                     };
                 }
 
-                log.LogInformation("INPUT: " + body);
                 var election = string.IsNullOrWhiteSpace(body) ? Election.DefaultValue() : JsonConvert.DeserializeObject<Election>(body);
 
                 var result = await service.Initialize(election).ConfigureAwait(false);

@@ -9,20 +9,30 @@ using Google;
 using StarVoteServer.GoogleFunctions;
 using System.IO;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace StarVoteServer
 {
-    public static class GetBallot
+    public static class CastBallot
     {
-        [FunctionName(nameof(Ballot))]
-        public static async Task<IActionResult> Ballot(
-        [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "Ballot/{docId}")] HttpRequest req, string docId, ILogger log)
+        [FunctionName(nameof(Vote))]
+        public static async Task<IActionResult> Vote(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "Vote/{docId}")] HttpRequest req, string docId, ILogger log)
         {
             using var service = new GoogleService(docId);
             string body = await new StreamReader(req.Body).ReadToEndAsync().ConfigureAwait(false);
             try
             {
+                var ballot = JsonConvert.DeserializeObject<BallotData>(body);
                 var election = await Election.Read(service, docId).ConfigureAwait(false);
+                if (ballot.Races.Count != election.Races.Count)
+                {
+                    throw new ApplicationException($"Inconsistent Race Count.\nExpecting: \"{election.Races.Count}\"\nActual: {ballot.Races.Count}");
+                }
+                for(var i = 0; i < ballot.Races.Count; i++)
+                {
+                    ballot.Races[i].Validate(election.Races[i]);
+                }
                 return new OkObjectResult(election);
             }
             catch (GoogleApiException ex)

@@ -66,7 +66,7 @@ namespace StarVoteServer.GoogleFunctions
             return JsonConvert.SerializeObject(response);
         }
 
-        internal async Task<string> GetElection(SheetInfo settingsSheet, SheetInfo votersSheet, List<SheetInfo> raceSheets)
+        internal async Task<Election> GetElection(SheetInfo settingsSheet, SheetInfo votersSheet, List<SheetInfo> raceSheets)
         {
             var ranges = new List<string>();
             ranges.Add($"{settingsSheet.Title}!A:B");
@@ -85,7 +85,7 @@ namespace StarVoteServer.GoogleFunctions
             election.AuthorizedVoters = ParseVoters(sheets[1]);
             election.Races = ParseRaces(raceSheets, sheets.Slice(2));
 
-            return JsonConvert.SerializeObject(election);
+            return election;
         }
 
         private List<Race> ParseRaces(List<SheetInfo> raceSheets, ValueRange[] ranges)
