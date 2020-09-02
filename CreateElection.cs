@@ -42,7 +42,8 @@ Please follow these steps:
                 var election = string.IsNullOrWhiteSpace(body) ? Election.DefaultValue() : JsonConvert.DeserializeObject<Election>(body);
 
                 var result = await service.Initialize(election).ConfigureAwait(false);
-                return new OkObjectResult(body);
+                //TODO: What is the most useful return value?
+                return new OkObjectResult(result);
             }
             catch (GoogleApiException ex)
             {

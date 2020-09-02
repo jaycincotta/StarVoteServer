@@ -49,7 +49,7 @@ namespace StarVoteServer
             };
         }
 
-        public static async Task<Election> Read(GoogleFunctions.GoogleService service, string docId)
+        public static async Task<Election> Read(GoogleFunctions.GoogleService service)
         {
             // First, validate that we can access the document.
             var info = await service.GetSheetInfo().ConfigureAwait(false);
@@ -114,6 +114,7 @@ For example, ""{GoogleFunctions.GoogleService.StarSymbol}Best Pianist""");
     {
         public string Caption { get; set; }
         public List<string> Candidates { get; set; }
+        public int? SheetId { get; set; }
     }
 
 }

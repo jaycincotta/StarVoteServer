@@ -24,16 +24,17 @@ namespace StarVoteServer
             try
             {
                 var ballot = JsonConvert.DeserializeObject<BallotData>(body);
-                var election = await Election.Read(service, docId).ConfigureAwait(false);
-                if (ballot.Races.Count != election.Races.Count)
+                var election = await Election.Read(service).ConfigureAwait(false);
+                ballot.Validate(election);
+
+                //TODO: Preload existing voterIds
+                if (string.IsNullOrWhiteSpace(ballot.VoterId))
                 {
-                    throw new ApplicationException($"Inconsistent Race Count.\nExpecting: \"{election.Races.Count}\"\nActual: {ballot.Races.Count}");
+                    ballot.VoterId = IdGenerator.NextVoterId();
                 }
-                for(var i = 0; i < ballot.Races.Count; i++)
-                {
-                    ballot.Races[i].Validate(election.Races[i]);
-                }
-                return new OkObjectResult(election);
+                var response = await service.CastBallot(ballot, election);
+                var result = $"{{\"voterId\": \"{ballot.VoterId}\"}}";
+                return new OkObjectResult(result);
             }
             catch (GoogleApiException ex)
             {

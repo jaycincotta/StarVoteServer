@@ -5,6 +5,16 @@ namespace StarVoteServer
 {
     public class IdGenerator
     {
+        public static string NextVoterId(IList<string> existing = null)
+        {
+            var idGenerator = new IdGenerator();
+            if (existing != null)
+            {
+                idGenerator.Preload(existing);
+            }
+            return idGenerator.NextId();
+        }
+
         private const int IdLength = 6;
         private const string _alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // excludes I O 0 1
 
@@ -25,7 +35,7 @@ namespace StarVoteServer
             do
             {
                 id = NextWord();
-            } while (!_generated.Contains(id));
+            } while (_generated.Contains(id));
 
             return id;
         }

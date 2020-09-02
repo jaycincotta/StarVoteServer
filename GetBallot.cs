@@ -22,7 +22,7 @@ namespace StarVoteServer
             string body = await new StreamReader(req.Body).ReadToEndAsync().ConfigureAwait(false);
             try
             {
-                var election = await Election.Read(service, docId).ConfigureAwait(false);
+                var election = await Election.Read(service).ConfigureAwait(false);
                 return new OkObjectResult(election);
             }
             catch (GoogleApiException ex)

@@ -8,6 +8,18 @@ namespace StarVoteServer
         public string Email { get; set; }
         public string VoterId { get; set; }
         public List<RaceData> Races { get; set; }
+
+        public void Validate(Election election)
+        {
+            if (Races.Count != election.Races.Count)
+            {
+                throw new ApplicationException($"Inconsistent Race Count.\nExpecting: \"{election.Races.Count}\"\nActual: {Races.Count}");
+            }
+            for (var i = 0; i < Races.Count; i++)
+            {
+                Races[i].Validate(election.Races[i]);
+            }
+        }
     }
 
     public class RaceData

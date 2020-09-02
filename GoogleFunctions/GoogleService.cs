@@ -2,6 +2,9 @@
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Util;
 using Newtonsoft.Json;
+using NodaTime;
+using NodaTime.Extensions;
+using NodaTime.TimeZones;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +31,46 @@ namespace StarVoteServer.GoogleFunctions
             var request = BuildUpdateRequest(range, values);
             var response = await request.ExecuteAsync().ConfigureAwait(false);
             return JsonConvert.SerializeObject(response.UpdatedCells);
+        }
+
+        internal async Task<BatchUpdateSpreadsheetResponse> CastBallot(BallotData ballot, Election election)
+        {
+            // Get the current time in the time zone of the spreadsheet.
+            var utc = DateTime.UtcNow;
+            var tz = DateTimeZoneProviders.Tzdb[election.TimeZone];
+            var timeStamp = utc.ToInstant().InZone(tz).ToDateTimeUnspecified().ToCellData();
+            var email = ballot.Email.ToCellData();
+            var voterId = ballot.VoterId.ToCellData();
+            var voterCells = new[] { email, voterId, timeStamp };
+            base.BeginBatch();
+            AddToBatch(new Request { AppendCells = new AppendCellsRequest {
+                SheetId = 1,
+                Fields = "*",
+                Rows = new[] { voterCells.ToRowData() }
+            } });
+            for(var i = 0; i < election.Races.Count; i++)
+            {
+                var cells = new List<CellData>();
+                cells.Add(voterId);
+                var scores = ballot.Races[i].Scores;
+                foreach(var score in scores)
+                {
+                    cells.Add(score.ToCellData());
+                }
+                AddToBatch(new Request
+                {
+                    AppendCells = new AppendCellsRequest
+                    {
+                        SheetId = election.Races[i].SheetId,
+                        Fields = "userEnteredValue",
+                        Rows = new[] { cells.ToArray().ToRowData() }
+                    }
+                });
+            }
+            var batch = EndBatch();
+            var response = await batch.ExecuteAsync().ConfigureAwait(false);
+            return response;
+
         }
 
         public async Task<GoogleSheetInfo> GetSheetInfo()
@@ -80,10 +123,12 @@ namespace StarVoteServer.GoogleFunctions
             var response = await request.ExecuteAsync().ConfigureAwait(false);
 
             var sheets = response.ValueRanges.ToArray();
-            var election = new Election();
-            election.Settings = ParseSettings(sheets[0]);
-            election.AuthorizedVoters = ParseVoters(sheets[1]);
-            election.Races = ParseRaces(raceSheets, sheets.Slice(2));
+            var election = new Election
+            {
+                Settings = ParseSettings(sheets[0]),
+                AuthorizedVoters = ParseVoters(sheets[1]),
+                Races = ParseRaces(raceSheets, sheets.Slice(2))
+            };
 
             return election;
         }
@@ -94,7 +139,8 @@ namespace StarVoteServer.GoogleFunctions
             for (var i = 0; i < raceSheets.Count; i++)
             {
                 var range = ranges[i].Values.First<IList<object>>();
-                var caption = raceSheets[i].Title.Substring(1); 
+                var caption = raceSheets[i].Title.Substring(1);
+                var sheetId = raceSheets[i].SheetId;
                 var candidates = new List<string>();
                 var columns = range.ToArray<object>().Slice<object>(1);
                 foreach(var column in columns)
@@ -104,7 +150,8 @@ namespace StarVoteServer.GoogleFunctions
                 var race = new Race
                 {
                     Caption = caption,
-                    Candidates = candidates
+                    Candidates = candidates,
+                    SheetId = sheetId
                 };
                 list.Add(race);
             }

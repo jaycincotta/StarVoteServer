@@ -83,21 +83,33 @@ namespace StarVoteServer
             return res;
         }
 
-        private static RowData CreateRow( params CellData[] cells)
+        public static RowData ToRowData( this CellData[] cells)
+        {
+            return CreateRow(cells);
+        }
+
+        private static RowData CreateRow(params CellData[] cells)
         {
             return new RowData { Values = cells };
         }
-        private static CellData ToCellData(this string value)
+
+        public static CellData ToCellData(this string value)
         {
             return new CellData { UserEnteredValue = value.ToExtendedValue() };
         }
 
-        private static CellData ToCellData(this DateTime? value)
+        public static CellData ToCellData(this int value)
+        {
+            return new CellData { UserEnteredValue = value.ToExtendedValue() };
+        }
+
+
+        public static CellData ToCellData(this DateTime? value)
         {
             return value.HasValue ? value.Value.ToCellData() : "".ToCellData();
         }
 
-        private static CellData ToCellData(this DateTime value)
+        public static CellData ToCellData(this DateTime value)
         {
             var googleDate = (int) value.Subtract(new DateTime(1899, 12, 30, 0, 0, 0)).TotalDays;
             var hour = value.Hour;
@@ -119,20 +131,24 @@ namespace StarVoteServer
             };
         }
 
-        private static CellData ToCellData(this bool value)
+        public static CellData ToCellData(this bool value)
         {
             return new CellData { UserEnteredValue = value.ToExtendedValue() };
         }
 
-        private static ExtendedValue ToExtendedValue(this string value)
+        public static ExtendedValue ToExtendedValue(this string value)
         {
             return new ExtendedValue { StringValue = value };
         }
 
-        private static ExtendedValue ToExtendedValue(this bool value)
+        public static ExtendedValue ToExtendedValue(this int value)
+        {
+            return new ExtendedValue { NumberValue = value };
+        }
+
+        public static ExtendedValue ToExtendedValue(this bool value)
         {
             return new ExtendedValue { BoolValue = value };
         }
-
     }
 }
