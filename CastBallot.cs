@@ -24,7 +24,7 @@ namespace StarVoteServer
             try
             {
                 var ballot = JsonConvert.DeserializeObject<BallotData>(body);
-                var election = await Election.Read(service).ConfigureAwait(false);
+                var election = await Election.ReadElection(service).ConfigureAwait(false);
                 ballot.Validate(election);
 
                 //TODO: Preload existing voterIds

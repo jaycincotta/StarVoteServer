@@ -9,21 +9,23 @@ using Google;
 using StarVoteServer.GoogleFunctions;
 using System.IO;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace StarVoteServer
 {
-    public static class GetBallot
+    public static class GetResults
     {
-        [FunctionName(nameof(Ballot))]
-        public static async Task<IActionResult> Ballot(
-        [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "Ballot/{docId}")] HttpRequest req, string docId, ILogger log)
+        [FunctionName(nameof(Results))]
+        public static async Task<IActionResult> Results(
+        [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "Results/{docId}")] HttpRequest req, string docId, ILogger log)
         {
             using var service = new GoogleService(docId);
             string body = await new StreamReader(req.Body).ReadToEndAsync().ConfigureAwait(false);
             try
             {
-                var ballot = await Election.ReadBallot(service).ConfigureAwait(false);
-                return new OkObjectResult(ballot);
+                var election = await Election.ReadElection(service).ConfigureAwait(false);
+                var results = await service.GetResults(election);
+                return new OkObjectResult(results);
             }
             catch (GoogleApiException ex)
             {

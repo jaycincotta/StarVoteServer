@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace StarVoteServer
 {
-    public class Election
+    // This class is used internally by the service and includes some information not shared with client
+    public class Election : ElectionBallot
+
     {
-        public string Title { get; set; }
         public string TimeZone { get; set; }
-        public ElectionSettings Settings { get; set; }
-        public List<Race> Races { get; set; }
         public List<string> AuthorizedVoters { get; set; }
+
 
         public static Election DefaultValue()
         {
@@ -49,7 +49,15 @@ namespace StarVoteServer
             };
         }
 
-        public static async Task<Election> Read(GoogleFunctions.GoogleService service)
+        public static async Task<ElectionBallot> ReadBallot(GoogleFunctions.GoogleService service)
+        {
+            var election = await Election.ReadElection(service).ConfigureAwait(false);
+            var ballot = new ElectionBallot { Title = election.Title, Races = election.Races, Settings = election.Settings};
+            return ballot;
+        }
+
+
+            public static async Task<Election> ReadElection(GoogleFunctions.GoogleService service)
         {
             // First, validate that we can access the document.
             var info = await service.GetSheetInfo().ConfigureAwait(false);
@@ -61,6 +69,7 @@ namespace StarVoteServer
                 // Ignore sheets that don't start with StarSymbol;
                 if (!sheet.Title.StartsWith(GoogleFunctions.GoogleService.StarSymbol))
                     continue;
+
                 var title = sheet.Title.Substring(1).Trim(); // Get the rest of title after star
                 if ("Settings".Equals(title, StringComparison.OrdinalIgnoreCase) || sheet.SheetId == 0)
                 {
@@ -94,6 +103,15 @@ For example, ""{GoogleFunctions.GoogleService.StarSymbol}Best Pianist""");
             election.TimeZone = info.TimeZone;
             return election;
         }
+    }
+
+    // This is the base class containing the fields that may be shared with the client
+    // describing the election ballot
+    public class ElectionBallot
+    {
+        public string Title { get; set; }
+        public ElectionSettings Settings { get; set; }
+        public List<Race> Races { get; set; }
     }
 
     public class ElectionSettings
