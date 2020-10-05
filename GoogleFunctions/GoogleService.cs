@@ -264,8 +264,8 @@ namespace StarVoteServer.GoogleFunctions
                         DateTime.TryParse(value, out var endTime);
                         settings.EndTime = endTime;
                         break;
-                    case "infourl":
-                        settings.InfoUrl = value;
+                    case "faqurl":
+                        settings.FaqUrl = value;
                         break;
                     case "adminemail":
                         settings.AdminEmail = value;
@@ -279,14 +279,17 @@ namespace StarVoteServer.GoogleFunctions
                     case "emailverification":
                         settings.EmailVerification = ParseBoolean(value);
                         break;
-                    case "voterauthorization":
-                        settings.VoterAuthorization = ParseBoolean(value);
-                        break;
                     case "ballotupdates":
                         settings.BallotUpdates = ParseBoolean(value);
                         break;
+                    case "randomizecandidates":
+                        settings.RandomizeCandidates = ParseBoolean(value);
+                        break;
                     case "publicresults":
                         settings.PublicResults = ParseBoolean(value);
+                        break;
+                    case "voterauthorization":
+                        settings.VoterAuthorization = ParseBoolean(value);
                         break;
                     default:
                         break;

@@ -40,14 +40,15 @@ namespace StarVoteServer
             var rows = new List<RowData> {
                 CreateRow("StartTime".ToCellData(), GetCellData(settings.StartTime)),
                 CreateRow("EndTime".ToCellData(), GetCellData(settings.EndTime)),
-                CreateRow("FaqUrl".ToCellData(), GetCellData(settings.InfoUrl)),
+                CreateRow("FaqUrl".ToCellData(), GetCellData(settings.FaqUrl)),
                 CreateRow("AdminEmail".ToCellData(), GetCellData(settings.AdminEmail)),
                 CreateRow("SupportEmail".ToCellData(), GetCellData(settings.SupportEmail)),
                 CreateRow("AuditEmail".ToCellData(), GetCellData(settings.AuditEmail)),
                 CreateRow("EmailVerification".ToCellData(), GetCellData(settings.EmailVerification)),
-                CreateRow("VoterAuthorization".ToCellData(), GetCellData(settings.VoterAuthorization)),
                 CreateRow("BallotUpdates".ToCellData(), GetCellData(settings.BallotUpdates)),
+                CreateRow("RandomizeCandidates".ToCellData(), GetCellData(settings.RandomizeCandidates)),
                 CreateRow("PublicResults".ToCellData(), GetCellData(settings.PublicResults)),
+                CreateRow("VoterAuthorization".ToCellData(), GetCellData(settings.VoterAuthorization)),
             };
 
             return rows;

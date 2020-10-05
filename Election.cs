@@ -20,14 +20,15 @@ namespace StarVoteServer
             {
                 StartTime = DateTime.UtcNow,
                 EndTime = DateTime.UtcNow + new TimeSpan(7, 0, 0, 0, 0),
-                InfoUrl = "",
+                FaqUrl = "",
                 AdminEmail = "you@gmail.com",
                 SupportEmail = "you@gmail.com",
                 AuditEmail = "you@gmail.com",
                 EmailVerification = true,
                 VoterAuthorization = false,
                 BallotUpdates = false,
-                PublicResults = true
+                PublicResults = true,
+                RandomizeCandidates = false
             };
             var races = new List<Race> {
                 new Race {
@@ -118,13 +119,14 @@ For example, ""{GoogleFunctions.GoogleService.StarSymbol}Best Pianist""");
     {
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
-        public string InfoUrl { get; set; }
+        public string FaqUrl { get; set; }
         public string AdminEmail { get; set; }
         public string SupportEmail { get; set; }
         public string AuditEmail { get; set; }
         public bool? EmailVerification { get; set; }
         public bool? VoterAuthorization { get; set; }
         public bool? BallotUpdates { get; set; }
+        public bool? RandomizeCandidates { get; set; }
         public bool? PublicResults { get; set; }
     }
 
