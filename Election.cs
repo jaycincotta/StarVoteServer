@@ -99,7 +99,7 @@ namespace StarVoteServer
 For each race, there should be a tab with the name of the race preceeded by {GoogleFunctions.GoogleService.StarSymbol}.
 For example, ""{GoogleFunctions.GoogleService.StarSymbol}Best Pianist""");
             }
-            var election = await service.GetElection(settingsSheet, votersSheet, raceSheets);
+            var election = await service.GetElection(settingsSheet, votersSheet, raceSheets, info.TimeZone);
             election.Title = info.Title;
             election.TimeZone = info.TimeZone;
             return election;

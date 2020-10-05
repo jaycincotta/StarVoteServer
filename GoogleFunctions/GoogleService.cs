@@ -166,7 +166,7 @@ namespace StarVoteServer.GoogleFunctions
             return JsonConvert.SerializeObject(response);
         }
 
-        internal async Task<Election> GetElection(SheetInfo settingsSheet, SheetInfo votersSheet, List<SheetInfo> raceSheets)
+        internal async Task<Election> GetElection(SheetInfo settingsSheet, SheetInfo votersSheet, List<SheetInfo> raceSheets, string timezone)
         {
             var ranges = new List<string>();
             ranges.Add($"{settingsSheet.Title}!A:B");
@@ -182,7 +182,7 @@ namespace StarVoteServer.GoogleFunctions
             var sheets = response.ValueRanges.ToArray();
             var election = new Election
             {
-                Settings = ParseSettings(sheets[0]),
+                Settings = ParseSettings(sheets[0], timezone),
                 AuthorizedVoters = ParseVoters(sheets[1]),
                 Races = ParseRaces(raceSheets, sheets.Slice(2))
             };
@@ -246,7 +246,17 @@ namespace StarVoteServer.GoogleFunctions
             return list;
         }
 
-        private ElectionSettings ParseSettings(ValueRange range)
+        private DateTime UtcFromTimeZone(DateTime source, string timeZone)
+        {
+            // Get the current time in the time zone of the spreadsheet.
+            var zone = DateTimeZoneProviders.Tzdb[timeZone];
+            var local = LocalDateTime.FromDateTime(source);
+            var zoned = local.InZoneLeniently(zone);
+            var utc = zoned.ToDateTimeUtc();
+            return utc;
+        }
+
+        private ElectionSettings ParseSettings(ValueRange range, string timezone)
         {
             var settings = new ElectionSettings();
             foreach (var row in range.Values)
@@ -257,12 +267,18 @@ namespace StarVoteServer.GoogleFunctions
                 switch (name)
                 {
                     case "starttime":
-                        DateTime.TryParse(value, out var startTime);
-                        settings.StartTime = startTime;
+                        if (!String.IsNullOrWhiteSpace(value))
+                        {
+                            DateTime.TryParse(value, out var startTime);
+                            settings.StartTime = UtcFromTimeZone(startTime, timezone);
+                        }
                         break;
                     case "endtime":
-                        DateTime.TryParse(value, out var endTime);
-                        settings.EndTime = endTime;
+                        if (!String.IsNullOrWhiteSpace(value))
+                        {
+                            DateTime.TryParse(value, out var endTime);
+                            settings.EndTime = UtcFromTimeZone(endTime, timezone);
+                        }
                         break;
                     case "faqurl":
                         settings.FaqUrl = value;
